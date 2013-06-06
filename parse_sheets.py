@@ -13,6 +13,7 @@ setup all dframes(one per test)
 """
 
 def xls_to_df(infile):
+    df = pandas.ExcelFile(infile).parse('Sheet1')
     pass
 
 def sub_baseline_dict(spreadsheet, id_header, basline_date_hdr):
@@ -29,6 +30,6 @@ def setup_dataframes(visitone_sheet, n_possible_sessions):
 
 if  __name__ == '__main__':
 
-    spreadsheet_dir = '/path/to/spreadsheets'
-    globstr = 'BACS_neurpsych*.xls'
+    spreadsheet_dir = '/home/jagust/bacs_pet/projects/jake/longdat/'
+    globstr = 'LongiSubjs_S*.xls'
     spreadsheets = sorted(glob(os.path.join(spreadsheet_dir, globstr))
