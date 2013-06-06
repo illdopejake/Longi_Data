@@ -14,6 +14,8 @@ setup all dframes(one per test)
 
 def xls_to_df(infile):
     df = pandas.ExcelFile(infile).parse('Sheet1')
+    print df
+    ###not sure how to make this return a df with a name unique to infile###
     pass
 
 def sub_baseline_dict(spreadsheet, id_header, basline_date_hdr):
