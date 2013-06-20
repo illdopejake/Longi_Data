@@ -2,6 +2,7 @@ import os
 from glob import glob
 import pandas
 import argparse
+import dateutil
 
 """
 get all spreadsheets
@@ -13,32 +14,40 @@ setup all dframes(one per test)
 """
 
 def xls_to_df(infile):
-    df = pandas.ExcelFile(infile).parse('Sheet1')
-    print df
-    ###not sure how to make this return a df with a name unique to infile###
-    pass
+    """Uses Pandas to turn an excel file into a dataframe
+    Assumes you want to parse Sheet1"""
+    try:
+	df = pandas.ExcelFile(infile).parse('Sheet1')
+    	return df
+    except:
+	df = pandas.ExcelFile(infile)
+        raise IOError('unable to parse Sheet1, sheets:%s'%df.sheet_names)
+    
 
 def sub_baseline_dict(spreadsheet, id_header, baseline_date_hdr):
-    xls_to_df(spreadsheet)
+    df = xls_to_df(spreadsheet)
 
     baseline_dates = {}
-    subj_id = df[id_header]
-    date = df[baseline_date_hdr]
+    subj_id = df[id_header].values
+    #date = df[baseline_date_hdr].values
     for id in subj_id:
-        baseline_dates.update({subj_id: date}) 
+	try:
+ 	    datestr = df[df[id_header] == id][baseline_date_hdr].item()
+	    #date = dateutil.parser.parse(datestr)
+            baseline_dates.update({id: datestr})
+	except:
+	    raise ValueError('unable to parse date, %s:%s'%(id,datestr))
+    return baseline_dates 
     
-    ###This won't work for two reasons.
-    ###1) I don't think xls_to_df will actually output df, will it?
-    ###2) Using df[x] creats an object that is unhashable, I guess because it
-    ###returns not just the values in the columns but also an index.  For 
-    ###whatever reason, this seems to give the dict trouble :-/
-        
 
     """ make a dictionary mapping subid to baseline date"""
     pass
 
 def setup_dataframes(visitone_sheet, n_possible_sessions):
-    """ create a  dataframe from spreadsheet 1 for each test
+    """xls_to_df(visitone_sheet)
+    for test in df.iteritems():
+	pass    		
+    create a  dataframe from spreadsheet 1 for each test
     return a list of dataframes"""
     pass
 
@@ -49,4 +58,4 @@ if  __name__ == '__main__':
 
     spreadsheet_dir = '/home/jagust/bacs_pet/projects/jake/longdat/'
     globstr = 'LongiSubjs_S*.xls'
-    spreadsheets = sorted(glob(os.path.join(spreadsheet_dir, globstr))
+    spreadsheets = sorted(glob(os.path.join(spreadsheet_dir, globstr)))
