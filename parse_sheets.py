@@ -43,11 +43,14 @@ def sub_baseline_dict(spreadsheet, id_header, baseline_date_hdr):
     """ make a dictionary mapping subid to baseline date"""
     pass
 
-def setup_dataframes(visitone_sheet, n_possible_sessions):
-    """xls_to_df(visitone_sheet)
+def setup_dataframes(visitone_sheet, id_header,  n_possible_sessions):
+    df = xls_to_df(visitone_sheet)
+    subj_id = df[id_header].values
+    empty = np.empty((len(subj_id),6))
     for test in df.iteritems():
+        newdf = pandas.DataFrame(empty, columns = ['nsess', 'poss_sess', 'slope','mean', 'std', 'baseline'], index = subj_id	    
 	pass    		
-    create a  dataframe from spreadsheet 1 for each test
+    """create a  dataframe from spreadsheet 1 for each test
     return a list of dataframes"""
     pass
 
