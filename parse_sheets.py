@@ -49,7 +49,9 @@ def setup_dataframes(visitone_sheet, id_header,  n_possible_sessions):
     empty = np.empty((len(subj_id),6))
     for test in df.iteritems():
         newdf = pandas.DataFrame(empty, columns = ['nsess', 'poss_sess', 'slope','mean', 'std', 'baseline'], index = subj_id	    
+     
 	pass    		
+    """next step is to manipulate the dataframe within the loop"""
     """create a  dataframe from spreadsheet 1 for each test
     return a list of dataframes"""
     pass
