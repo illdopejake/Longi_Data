@@ -3,6 +3,7 @@ from glob import glob
 import pandas
 import argparse
 import dateutil
+import numpy as np
 
 """
 get all spreadsheets
@@ -43,12 +44,45 @@ def sub_baseline_dict(spreadsheet, id_header, baseline_date_hdr):
     """ make a dictionary mapping subid to baseline date"""
     pass
 
+def count_sessions(spreadsheets,valid_cols):
+    """Return a dataframe with the number of datapoints found for each subject for each test."""
+    possible_sessions = len(spreadsheets)
+    df0 = xls_to_df(spreadsheets[0])
+    nsub, _ = df0.shape
+    ntests = len(valid_cols)
+    counts = np.zeros((nsub,ntests))
+    for ss in spreadsheets:
+        tempdf = xls_to_df(ss)
+	testsdf = tempdf.reindex(columns = valid_cols).values
+	hasdata = pandas.notnull(testsdf)
+	counts += hasdata
+    newdf = pandas.DataFrame(counts, index = df0.index, columns = valid_cols)
+    return newdf, possible_sessions
+
+def make_sheets(tests,subs,poss_sess)
+    dframes = {}
+    for test in tests:
+	temp = np.array((len(subs)),poss_sess)
+	temp[!] = np.nan
+	cols = ['%s_v%'%(test,x) for x in range(poss_sess)]
+	othercols = ['s%_v%_delta'%(test,x) for x in range(poss_sess)]
+	allcols = cols + othercols
+	allcols.sort()
+	tmpdf = pandas.DataFrame(tmp,index = subs, columns = allcols)
+	dframes.update({test: tmpdf})
+    
+    return dframes
+
+
 def setup_dataframes(visitone_sheet, id_header,  n_possible_sessions):
     df = xls_to_df(visitone_sheet)
-    subj_id = df[id_header].values
+    subj_ids = df[id_header].values
     empty = np.empty((len(subj_id),6))
-    for test in df.iteritems():
-        newdf = pandas.DataFrame(empty, columns = ['nsess', 'poss_sess', 'slope','mean', 'std', 'baseline'], index = subj_id	    
+    empty[:] = np.nan
+    cols = df.columns
+    cols = [x for x in cols if 'TstScrs' in x]
+    for test in cols:
+        newdf = pandas.DataFrame(empty, columns = ['nsess', 'poss_sess', 'slope','mean', 'std', 'baseline'], index = subj_id)
      
 	pass    		
     """next step is to manipulate the dataframe within the loop"""
