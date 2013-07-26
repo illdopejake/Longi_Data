@@ -96,6 +96,27 @@ def populate_test_dfs(dframes, spreadsheets, baseline_dates):
 		           'Session %d'%(sn+1)) for x in used_tests]
 	
 
+def create_rfx_dataframe(spreadsheets, valid_tests = None):
+    """Given spreadsheets with tests, create a numpy matrix
+    with scores, delta time (from baseline) in days, and 
+    possible number tests for each subject for each test
+    in valid_tests (if valid_tests is None, use all of them)"""
+    alldf = {}
+    for sn, sheet in enumerate(spreadsheets):
+        tmpdf = xls_to_df(sheet)
+        newtmpdf = fix_column_names(tmpdf, sn+1)
+        alldf.update({'sess_%02d'%sn : newtmpdf})
+        newpanel = pandas.Panel(alldf)
+    return newpanel
+
+def fix_column_names(dataframe, session_number):
+    """ removed reference to test session number in column names"""
+    cols = dataframe.columns
+    newcols = [x.replace('Session %d'%session_number, '') for x in cols]
+    newcols = [x.replace('Test Date %d'%session_number, 
+                         'Test Date') for x in newcols]
+    dataframe.columns = newcols
+    return dataframe
 
 def setup_dataframes_0(spreadsheets, baseline_dates, tests):
 	poss_sess = len(spreadsheets)
@@ -127,5 +148,5 @@ def setup_dataframes(visitone_sheet, id_header,  n_possible_sessions):
 if  __name__ == '__main__':
 
     spreadsheet_dir = '/home/jagust/bacs_pet/projects/jake/longdat/'
-    globstr = 'LongiSubjs_S*.xls'
+    globstr = 'Longi_Neuropysch_S*.xls'
     spreadsheets = sorted(glob(os.path.join(spreadsheet_dir, globstr)))
