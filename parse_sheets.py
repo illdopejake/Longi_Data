@@ -51,27 +51,58 @@ def count_sessions(spreadsheets,valid_cols):
     nsub, _ = df0.shape
     ntests = len(valid_cols)
     counts = np.zeros((nsub,ntests))
-    for ss in spreadsheets:
+    for sn, ss in enumerate(spreadsheets):
+	vcols = [x.replace('Session 1', 'Session %d'%(sn+1)) for x in valid_cols]
         tempdf = xls_to_df(ss)
-	testsdf = tempdf.reindex(columns = valid_cols).values
+	testsdf = tempdf.reindex(columns = vcols).values
 	hasdata = pandas.notnull(testsdf)
 	counts += hasdata
     newdf = pandas.DataFrame(counts, index = df0.index, columns = valid_cols)
     return newdf, possible_sessions
 
-def make_sheets(tests,subs,poss_sess)
+def make_sheets(tests,subs,poss_sess):
+    """ creates empty dataframe to hold score and time delta values
+    for each test, for len(subs)"""
     dframes = {}
     for test in tests:
-	temp = np.array((len(subs)),poss_sess)
-	temp[!] = np.nan
-	cols = ['%s_v%'%(test,x) for x in range(poss_sess)]
-	othercols = ['s%_v%_delta'%(test,x) for x in range(poss_sess)]
+	temp = np.empty((len(subs),(2 * poss_sess)))
+	temp[:] = np.nan
+	cols = ['%s_%d'%(test,x) for x in range(poss_sess)]
+	othercols = ['%s_%d'%(test,x)+'_delta' for x in range(poss_sess)]
 	allcols = cols + othercols
 	allcols.sort()
-	tmpdf = pandas.DataFrame(tmp,index = subs, columns = allcols)
+	tmpdf = pandas.DataFrame(temp,index = subs, columns = allcols)
 	dframes.update({test: tmpdf})
     
     return dframes
+
+def populate_test_dfs(dframes, spreadsheets, baseline_dates):
+    """ populate data frames with test scores and delta time since
+    baseline visit
+
+    dframes : dict
+        empty data frame for each test to hold test score and time delta
+	(to be filled)
+    spreadsheets : list
+        list of strings pointing to xls files holding test data 
+	(in visit order)
+    baseline_dates: dict
+        maps subid -> baseline test date
+    """
+    used_tests = sorted(dframes.keys())
+    for sn, sheet in enumerate(spreadsheets):
+        tmpdf = xls_to_df(sheet)
+	vcols = [x.replace('Session 1', 
+		           'Session %d'%(sn+1)) for x in used_tests]
+	
+
+
+def setup_dataframes_0(spreadsheets, baseline_dates, tests):
+	poss_sess = len(spreadsheets)
+	df0 = xls_to_df(spreadsheets[0])
+	nsub,_ = df0.shape
+	subs = df0.index
+	dframes = make_sheets(tests,subs,poss_sess)
 
 
 def setup_dataframes(visitone_sheet, id_header,  n_possible_sessions):
