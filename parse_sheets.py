@@ -3,6 +3,7 @@ from glob import glob
 import pandas
 import argparse
 import dateutil
+import datetime
 import numpy as np
 
 """
@@ -132,12 +133,24 @@ def add_deltadays_topanel(panel):
     nsess, nsub, ntests = panel.shape
     ### need to fix this to handle 
     for i in range(nsess):
-        panel['sess_%02d'%i][:]['days_since_sess1'] = panel['sess_%02d'%i][:][minor_xs] - panel['sess_00'][:][minor_xs]
+	#time_diff = panel['sess_%02d'%i][:][minor_xs] - \
+	#	    panel['sess_00'][:][minor_xs]
+        time_0 = panel['sess_00'][:][minor_xs]
+	time_x = panel['sess_%02d'%i][:][minor_xs]
+	time_del = time_x - time_0
+	mask = pandas.notnull(time_del)
+
+	time_del_days = [x.days for x in time_del[mask].values]
+	panel['sess_%02d'%i][:]['days_since_sess1'][mask] = time_del_days
+	print panel['sess_%02d'%i][:]['days_since_sess1']
+        #panel['sess_%02d'%i][:]['days_since_sess1'] = time_diff.days
     
 
 def setup_dataframes_0(spreadsheets, baseline_dates, tests):
 	poss_sess = len(spreadsheets)
 	df0 = xls_to_df(spreadsheets[0])
+        #'Session %d'%(sn+1)) for x in used_tests]
+	
 	nsub,_ = df0.shape
 	subs = df0.index
 	dframes = make_sheets(tests,subs,poss_sess)
