@@ -29,6 +29,12 @@ nosetests.xml
 # Translations
 *.mo
 
+# Editor
+*.swp
+*.swn
+*.swo
+*py~
+
 # Mr Developer
 .mr.developer.cfg
 .project
