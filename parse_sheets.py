@@ -7,6 +7,19 @@ import datetime
 import numpy as np
 
 """
+
+accessing panel
+panel.items (0)-> sessions (gives list of items headers sess_00, sess_01)
+panel.major_axis (1)-> subjects (gives list of subject index (0-x)
+## to rename major axis
+   panel.major_axis = panel.minor_xs('BAC#').values[:,0]
+panel.minor_axis (2)-> tests
+
+
+df = panel['sess_00']
+df.ix['BAC001']
+
+
 get all spreadsheets
 
 grab first one
