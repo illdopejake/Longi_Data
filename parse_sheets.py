@@ -219,34 +219,18 @@ def calculate_longitudinal_scores(panel):
     
     return slopedf, next_panel
 
-def rinse_and_repeat(df,ypanel,xdf):
-    negmask = np.isnan(df)
-    masked_values = np.where(negmask,ypanel.values,np.nan)
-    masked_panel = pandas.Panel(masked_values,items = ypanel.items.tolist(), major_axis = ypanel.major_axis.tolist(), minor_axis = ypanel.minor_axis.tolist())
-    next_panel = masked_panel.drop(masked_panel.items[-1], axis = 0)
-    xdf_cols = xdf.columns.tolist()
-    delcols = [x for x in xdf_cols if x != xdf_cols[-1]]
-    nxdf = xdf.reindex(columns = delcols)
-    nxdf = nxdf.transpose()
-    xdf_vals = nxdf.values
-    msess,msub,mtest = next_panel.shape
-    pan_vals = next_panel.values
-    r_pan_vals = np.reshape(pan_vals,(msess,(msub*mtest)), 'F')
-    nextmat = np.concatenate((r_pan_vals,xdf_vals), axis = 1)
-    nextmat = np.reshape(nextmat,(msess,msub,(mtest+1)), 'F')
-    next_panel = pandas.Panel(nextmat, items = next_panel.items.tolist(), major_axis = next_panel.major_axis.tolist())
-    newcols = ypanel.minor_axis.tolist() + [unicode('days_since_sess1')]
-    next_panel.minor_axis = newcols
-
-    return next_panel
-
-def generate_others_dfs(panel):
-    xdf = panel.minor_xs('days_since_sess1')
+def adjust_headers(panel):
     ycols = [x for x in panel.minor_axis if 'days_since' not in x]
     ycols = [x for x in ycols if 'Session Notes' not in x]
     ycols = [x for x in ycols if 'BAC#' not in x]
     ycols = [x for x in ycols if 'Exam Test Date' not in x]
     ypanel = panel.reindex(minor_axis=ycols)
+
+    return ypanel
+
+
+def generate_others_dfs(panel):
+    ypanel = adjust_headers(panel)
     meandf = ypanel.mean(axis = 'items')
     stddf = ypanel.std(axis = 'items')
     maxdf = ypanel.max(axis = 'items')
@@ -270,27 +254,41 @@ def generate_all_slope_dfs(panel):
 
 def combine_dfs(panel,dfs):
     nsess,_,jnk = panel.shape
+    ypanel = adjust_headers(panel)
+    xcols = panel['sess_00'][:]['BAC#'].tolist()
+    ycols = ypanel.minor_axis.tolist()
     final_df = dfs[nsess]
     for df in dfs.itervalues():
         final_df = final_df.combine_first(df)
     
-    final_df = pandas.DataFrame(final_df, index = panel['sess_00'][:]['BAC#'].tolist, columns = 
+    final_df.index = xcols 
+    final_df.columns = ycols 
+    
     return final_df
 
-        
 
-   
+def calculate_intercept(panel,slopedf):
+    #(EY-b(EX)/n   b = slope:
+    nsess,_,jnk = panel.shape
+    nsub,ntest = slopedf.shape
+    ypanel = adjust_headers(panel)
+    coef0 = ypanel.sum(axis = 'items')
+    coef0.index = slopedf.index.tolist()
+    newcols = [x for x in panel.minor_axis if 'Exam Test Date' not in x]
+    npanel = panel.reindex(minor_axis=newcols)
+    xdf = npanel.minor_xs('days_since_sess1')
+    EX = xdf.sum(1)
+    EX_mat = np.hstack(tuple(EX.tolist() * ntest))
+    EX_mat = np.reshape(EX_mat,(nsub,ntest),'F')
+    coef1 = pandas.DataFrame((EX_mat * slopedf.values),index = slopedf.index.tolist(), columns = slopedf.columns.tolist())
+    numer = coef0.sub(coef1)
+    intdf = numer.div(nsess)
 
-   # for item in ydf.iteritems():
-#	n_coef_1 = item[1] * EX
-#	df.update(n_coef_1)
+    return intdf
 
+    #add new ind and cols to EX_mat, then multiply and finish equationnd.
+    #this returns mostly NAN (why not coef0?).  I will have to iterate through like I did for the slope and recursively replace the NANs with values.  I can do this either now or once the equation has been finished.    
 
-    #newpanel = panel.transpose(2,1,0)
-    #frames = [{}
-    #for item, frame in newpanel.iteritems():
-        #f = np.sum(frame,axis = 1)
-	#frames.update({item: f})
 
 def setup_dataframes_0(spreadsheets, baseline_dates, tests):
 	poss_sess = len(spreadsheets)
@@ -328,4 +326,19 @@ if  __name__ == '__main__':
     spreadsheets = sorted(glob(os.path.join(spreadsheet_dir, globstr)))
     panel = create_rfx_dataframe(spreadsheets)
     add_deltadays_topanel(panel)
-
+    dfs = generate_all_slope_dfs(panel)
+    slopedf = combine_dfs(panel,dfs)
+    intdf = calculate_intercept(panel,slopedf)
+    meandf,stddf,maxdf,mindf,baseline_df = generate_others_dfs(panel)
+    #count_df = 
+    dflist = [meandf,stddf,maxdf,mindf,baseline_df]
+    for df in dflist:
+        new_ind = panel['sess_00'][:]['BAC#'].tolist()
+	df.index = new_ind
+    outdir = '/home/jagust/bacs_pet/projects/jake/longdat/ps_script_output/'
+    slopedf.to_excel(outdir+'slopedf.xls')
+    meandf.to_excel(outdir+'meandf.xls')
+    stddf.to_excel(outdir+'stddf.xls')
+    maxdf.to_excel(outdir+'maxdf.xls')
+    mindf.to_excel(outdir+'mindf.xls')
+    baseline_df.to_excel(outdir+'baseline_df.xls')
