@@ -18,18 +18,31 @@ def retrieve_vals(panel,test):
 def plot_test_vals(panel,slopedf,intdf,test):
     nsub,jnk = slopedf.shape
     x0,x1 = retrieve_vals(panel,'days_since_sess1')
-    x_alt = panel['sess_01']
+    x_alt = panel['sess_01'][:]['days_since_sess1']
     y = panel['sess_00'][:][test]
+    y_alt = panel['sess_01'][:][test]
     m = slopedf[:][test]
     b = intdf[:][test]
-    arr_list = [x1,y,m,b]
+    arr_list = [x1,y,m,b,x_alt,y_alt]
     val_mat = x0.append(arr_list)
-    val_mat = np.reshape(val_mat,(nsub,5),'F')
+    val_mat = np.reshape(val_mat,(nsub,7),'F')
     valdf = pandas.DataFrame(val_mat)
     pylab.figure()
-    for _,x0,x1,y,m,b in valdf.itertuples():
-        x = [x0,x1]
-	y = [y, m * y + b]
-	pylab.plot(x,y, 'k-', lw = 1)
-    
+    for _,x0,x1,y,m,b,x_alt,y_alt in valdf.itertuples():
+	if np.isnan(y) == False:
+	    xs = [x0,x1]
+	    ys = [m * x0 + b, m * x1 + b]
+	    if m < 0:
+	        pylab.plot(xs,ys, 'r-', lw = 1)
+	    else:
+		pylab.plot(xs,ys, 'k-', lw = 1)
+        else:
+	    xs = [x_alt,x1]
+	    ys = [x_alt * m + b, m * x1 + b]
+	    if m < 0:
+	        pylab.plot(xs,ys, 'r-', lw = 1)
+	    else:
+                pylab.plot(xs,ys, 'k-', lw = 1)
+
     pylab.show()
+    return valdf

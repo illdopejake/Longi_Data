@@ -60,10 +60,13 @@ def sub_baseline_dict(spreadsheet, id_header, baseline_date_hdr):
     """ make a dictionary mapping subid to baseline date"""
     pass
 
-def count_sessions(spreadsheets,valid_cols):
+def count_sessions(spreadsheets):
     """Return a dataframe with the number of datapoints found for each subject for each test."""
     possible_sessions = len(spreadsheets)
     df0 = xls_to_df(spreadsheets[0])
+    newcols = df0.columns.tolist()
+    newcols = [x for x in newcols if 'Exam Test Date' not in x]
+    valid_cols = [x for x in newcols if 'Session Notes' not in x]
     nsub, _ = df0.shape
     ntests = len(valid_cols)
     counts = np.zeros((nsub,ntests))
@@ -74,6 +77,7 @@ def count_sessions(spreadsheets,valid_cols):
 	hasdata = pandas.notnull(testsdf)
 	counts += hasdata
     newdf = pandas.DataFrame(counts, index = df0.index, columns = valid_cols)
+    newdf = newdf.sort(axis = 1)
     return newdf, possible_sessions
 
 def make_sheets(tests,subs,poss_sess):
@@ -289,6 +293,16 @@ def calculate_intercept(panel,slopedf):
     #add new ind and cols to EX_mat, then multiply and finish equationnd.
     #this returns mostly NAN (why not coef0?).  I will have to iterate through like I did for the slope and recursively replace the NANs with values.  I can do this either now or once the equation has been finished.    
 
+def remove_subjs_w_less_than_3_sessions(panel,countdf,df):
+    countmask = np.where(countdf > 2,countdf,np.nan)
+    #cdf = pandas.DataFrame(countmask,index = panel['sess_00'][:]['BAC#'].tolist(), columns = df.columns.tolist())
+    newmask = np.isnan(countmask)
+    maskvals = np.where(newmask,np.nan,df)
+    maskdf = pandas.DataFrame(maskvals, index = df.index.tolist(),columns = df.columns.tolist())
+    
+    return maskdf
+
+    
 
 def setup_dataframes_0(spreadsheets, baseline_dates, tests):
 	poss_sess = len(spreadsheets)
@@ -335,6 +349,15 @@ if  __name__ == '__main__':
     for df in dflist:
         new_ind = panel['sess_00'][:]['BAC#'].tolist()
 	df.index = new_ind
+    countdf,_ = count_sessions(spreadsheets)
+    dflist.append(slopedf)
+    dflist.append(intdf)
+    for df in dflist:
+	df = remove_subjs_w_less_than_3_sessions(panel,countdf,df)
+    #this doesn't work yet.  I have to change the columns of baseline df to
+    #match that of the other dfs. I will hold off tho because I want to make
+    #a separate function to create the baseline_df that will replace sess 1
+    #vals with sess2 vals if sess2 vals are NaN
     outdir = '/home/jagust/bacs_pet/projects/jake/longdat/ps_script_output/'
     slopedf.to_excel(outdir+'slopedf.xls')
     meandf.to_excel(outdir+'meandf.xls')
