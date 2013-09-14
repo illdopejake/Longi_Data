@@ -293,7 +293,7 @@ def generate_others_dfs(panel):
     sess01 = ypanel['sess_01'][:][:]
     bs_mask = ~pandas.notnull(sess00.values)
     nbaseline_df = np.where(bs_mask,sess01.values,sess00.values)
-    baseline_df = pandas.DataFrame(nbaseline_df)
+    baseline_df = pandas.DataFrame(nbaseline_df,columns = ypanel.minor_axis.tolist())
 
     return meandf,stddf,maxdf,mindf,baseline_df
 
@@ -466,18 +466,24 @@ if  __name__ == '__main__':
         df = remove_subjs_w_less_than_3_sessions(panel,countdf,df)
 	dfs.append(df)
     
-    intdf = dfs[6]
-    slopedf = dfs[5]
-    baseline_df = dfs[4]
-    mindf = dfs[3]
-    maxdf = dfs[2]
-    stddf = dfs[1]
-    meandf = dfs[0]
-
+    namelist = ['meandf','stddf','maxdf','mindf','baseline_df','slopedf','intdf']
     outdir = '/home/jagust/bacs_pet/projects/jake/longdat/ps_script_output/'
-    slopedf.to_excel(outdir+'slopedf.xls')
-    meandf.to_excel(outdir+'meandf.xls')
-    stddf.to_excel(outdir+'stddf.xls')
-    maxdf.to_excel(outdir+'maxdf.xls')
-    mindf.to_excel(outdir+'mindf.xls')
-    baseline_df.to_excel(outdir+'baseline_df.xls')
+    for i,name in enumerate(namelist):
+	dfs[i].columns = [x.replace(x,x+'_'+name) for x in dfs[i].columns.tolist()]
+        dfs[i].to_excel(outdir+name+'.xls', na_rep='')
+   
+    #intdf = dfs[6]
+    #slopedf = dfs[5]
+    #baseline_df = dfs[4]
+    #mindf = dfs[3]
+    #maxdf = dfs[2]
+    #stddf = dfs[1]
+    #meandf = dfs[0]
+
+    
+    #slopedf.to_excel(outdir+'slopedf.xls')
+    #meandf.to_excel(outdir+'meandf.xls')
+    #stddf.to_excel(outdir+'stddf.xls')
+    #maxdf.to_excel(outdir+'maxdf.xls')
+    #mindf.to_excel(outdir+'mindf.xls')
+    #baseline_df.to_excel(outdir+'baseline_df.xls')

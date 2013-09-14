@@ -11,8 +11,8 @@ def retrieve_vals(panel,test):
        #val1.update(val)
     val0 = panel.minor_xs(test).min(axis=1)
     val1 = panel.minor_xs(test).max(axis=1)
-    val0.index = panel['sess_00'][:]['BAC#'].tolist()
-    val1.index = panel['sess_00'][:]['BAC#'].tolist()
+    val0.index = panel['sess_00'][:]['TstScrs ::BAC#'].tolist()
+    val1.index = panel['sess_00'][:]['TstScrs ::BAC#'].tolist()
     
 
     return val0,val1
@@ -47,4 +47,4 @@ def plot_test_vals(panel,slopedf,intdf,test):
                 pylab.plot(xs,ys, 'k-', lw = 1)
 
     pylab.show()
-    return valdf
+    #return valdf
